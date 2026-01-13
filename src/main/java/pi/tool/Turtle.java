@@ -14,7 +14,7 @@ public class Turtle {
     //
     Vec home = Vec.ZERO;
     Vec pos = Vec.ZERO, dir = Vec.Unit.X;
-    Block block = Block.WOOD_PLANKS;
+    Block block = Block.fromName("OAK_PLANKS");
     boolean shouldPlaceBlock = false;
 
     public Turtle(Minecraft mc) {

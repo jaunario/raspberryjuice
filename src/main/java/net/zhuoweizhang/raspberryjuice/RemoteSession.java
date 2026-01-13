@@ -178,7 +178,7 @@ public class RemoteSession {
 			// world.getBlock
 			if (c.equals("world.getBlock")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				send(world.getBlockTypeIdAt(loc));
+				send(world.getBlockTypeIdAt(loc) + "," + world.getBlockAt(loc).getData());
 				
 			// world.getBlocks
 			} else if (c.equals("world.getBlocks")) {
@@ -194,13 +194,16 @@ public class RemoteSession {
 			// world.setBlock
 			} else if (c.equals("world.setBlock")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				updateBlock(world, loc, getBlockId(args[3]), (args.length > 4? Byte.parseByte(args[4]) : (byte) 0));
+				int blockType = getBlockId(args[3]);
+				if (blockType == -1) return;
+				updateBlock(world, loc, blockType, (args.length > 4? Byte.parseByte(args[4]) : (byte) 0));
 				
 			// world.setBlocks
 			} else if (c.equals("world.setBlocks")) {
 				Location loc1 = parseRelativeBlockLocation(args[0], args[1], args[2]);
 				Location loc2 = parseRelativeBlockLocation(args[3], args[4], args[5]);
 				int blockType = getBlockId(args[6]);
+				if (blockType == -1) return;
 				byte data = args.length > 7? Byte.parseByte(args[7]) : (byte) 0;
 				setCuboid(loc1, loc2, blockType, data);
 				
@@ -653,9 +656,9 @@ public class RemoteSession {
 
 		String currentVersion = plugin.getServer().getVersion();
 		if (versionManager.isBlockAvailable(name, currentVersion)) {
-			return versionManager.getBlockId(name);
+			return versionManager.getBlockData(name).id;
 		} else {
-			plugin.getLogger().warning("Block " + name + " is not available in this version of Minecraft.");
+			send("Fail: Block " + name + " is not available in this version of Minecraft.");
 			return -1;
 		}
 	}

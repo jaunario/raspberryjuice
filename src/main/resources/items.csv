@@ -1,0 +1,8 @@
+name,id,min_version,max_version,category,group,subgroup,stackability,renewable,damage,durability,hunger,saturation
+iron_sword,267,1.0,,weapon,iron,sword,1,true,6,250,0,0
+wooden_sword,268,1.0,,weapon,wood,sword,1,true,4,59,0,0
+stone_sword,272,1.0,,weapon,stone,sword,1,true,5,131,0,0
+diamond_sword,276,1.0,,weapon,diamond,sword,1,false,7,1561,0,0
+golden_sword,283,1.0,,weapon,gold,sword,1,true,4,32,0,0
+apple,260,1.0,,food,,,64,true,0,0,4,2.4
+bread,297,1.0,,food,,,64,true,0,0,5,6

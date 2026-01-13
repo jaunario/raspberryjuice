@@ -1,0 +1,6 @@
+name,id,min_version,max_version,category,group,subgroup,blast_resistance,hardness,water_loggable,renewable,stackable,tool,flammable,luminance
+stone,1,1.0,,building_block,stone,,6,1.5,false,true,true,pickaxe,false,0
+grass_block,2,1.0,,building_block,dirt,,0.6,0.6,false,true,true,shovel,false,0
+dirt,3,1.0,,building_block,dirt,,0.5,0.5,false,true,true,shovel,false,0
+cobblestone,4,1.0,,building_block,stone,cobblestone,6,2,false,true,true,pickaxe,false,0
+oak_planks,5,1.0,,building_block,wood,oak,3,2,false,true,true,axe,true,0

@@ -60,11 +60,13 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener {
         //
         // Load the version manager
         //
-        InputStream stream = getResource("mc_version_data.csv");
-        if (stream == null) {
-            getLogger().warning("Could not find mc_version_data.csv, version compatibility checking will not be available.");
+        InputStream blockStream = getResource("blocks.csv");
+        InputStream itemStream = getResource("items.csv");
+        if (blockStream == null || itemStream == null) {
+            getLogger().warning("Could not find blocks.csv or items.csv, version compatibility checking will not be available.");
         } else {
-            versionManager = new VersionManager(stream);
+            versionManager = new VersionManager(blockStream, itemStream);
+            ApiManager.setVersionManager(versionManager);
         }
 
         //get host and port from config.yml
@@ -224,11 +226,13 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener {
 			//
 			// Load the version manager
 			//
-			InputStream stream = getResource("mc_version_data.csv");
-			if (stream == null) {
-				getLogger().warning("Could not find mc_version_data.csv, version compatibility checking will not be available.");
+			InputStream blockStream = getResource("blocks.csv");
+			InputStream itemStream = getResource("items.csv");
+			if (blockStream == null || itemStream == null) {
+				getLogger().warning("Could not find blocks.csv or items.csv, version compatibility checking will not be available.");
 			} else {
-				versionManager = new VersionManager(stream);
+				versionManager = new VersionManager(blockStream, itemStream);
+                ApiManager.setVersionManager(versionManager);
 			}
 			sender.sendMessage("RaspberryJuice configuration and data reloaded.");
 			return true;
