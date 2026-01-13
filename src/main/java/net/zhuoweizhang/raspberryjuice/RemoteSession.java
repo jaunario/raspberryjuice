@@ -53,6 +53,8 @@ public class RemoteSession {
 
 	public RaspberryJuicePlugin plugin;
 
+	private final VersionManager versionManager;
+
 	protected ArrayDeque<PlayerInteractEvent> interactEventQueue = new ArrayDeque<PlayerInteractEvent>();
 	
 	protected ArrayDeque<AsyncPlayerChatEvent> chatPostedQueue = new ArrayDeque<AsyncPlayerChatEvent>();
@@ -69,6 +71,7 @@ public class RemoteSession {
 		this.socket = socket;
 		this.plugin = plugin;
 		this.locationType = plugin.getLocationType();
+		this.versionManager = plugin.versionManager;
 		init();
 	}
 
@@ -191,13 +194,13 @@ public class RemoteSession {
 			// world.setBlock
 			} else if (c.equals("world.setBlock")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				updateBlock(world, loc, Integer.parseInt(args[3]), (args.length > 4? Byte.parseByte(args[4]) : (byte) 0));
+				updateBlock(world, loc, getBlockId(args[3]), (args.length > 4? Byte.parseByte(args[4]) : (byte) 0));
 				
 			// world.setBlocks
 			} else if (c.equals("world.setBlocks")) {
 				Location loc1 = parseRelativeBlockLocation(args[0], args[1], args[2]);
 				Location loc2 = parseRelativeBlockLocation(args[3], args[4], args[5]);
-				int blockType = Integer.parseInt(args[6]);
+				int blockType = getBlockId(args[6]);
 				byte data = args.length > 7? Byte.parseByte(args[7]) : (byte) 0;
 				setCuboid(loc1, loc2, blockType, data);
 				
@@ -587,7 +590,7 @@ public class RemoteSession {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
 				Block thisBlock = world.getBlockAt(loc);
 				//blockType should be 68 for wall sign or 63 for standing sign
-				int blockType = Integer.parseInt(args[3]);	
+				int blockType = getBlockId(args[3]);
 				//facing direction for wall sign : 2=north, 3=south, 4=west, 5=east
 				//rotation 0 - to 15 for standing sign : 0=south, 4=west, 8=north, 12=east
 				byte blockData = Byte.parseByte(args[4]); 
@@ -633,6 +636,27 @@ public class RemoteSession {
 			e.printStackTrace();
 			send("Fail");
 		
+		}
+	}
+
+	private int getBlockId(String name) {
+		if (versionManager == null) {
+			return Integer.parseInt(name);
+		}
+
+		// Try to parse as an integer
+		try {
+			return Integer.parseInt(name);
+		} catch (NumberFormatException e) {
+			// It's not a number, so check the version manager
+		}
+
+		String currentVersion = plugin.getServer().getVersion();
+		if (versionManager.isBlockAvailable(name, currentVersion)) {
+			return versionManager.getBlockId(name);
+		} else {
+			plugin.getLogger().warning("Block " + name + " is not available in this version of Minecraft.");
+			return -1;
 		}
 	}
 
