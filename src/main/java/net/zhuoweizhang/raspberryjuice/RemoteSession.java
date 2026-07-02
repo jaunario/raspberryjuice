@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -175,7 +176,7 @@ public class RemoteSession {
 			// world.getBlock
 			if (c.equals("world.getBlock")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				send(world.getBlockTypeIdAt(loc));
+				send(world.getBlockAt(loc).getType().name());
 				
 			// world.getBlocks
 			} else if (c.equals("world.getBlocks")) {
@@ -186,18 +187,19 @@ public class RemoteSession {
 			// world.getBlockWithData
 			} else if (c.equals("world.getBlockWithData")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				send(world.getBlockTypeIdAt(loc) + "," + world.getBlockAt(loc).getData());
+				Block block = world.getBlockAt(loc);
+				send(block.getType().name() + "," + block.getData());
 				
 			// world.setBlock
 			} else if (c.equals("world.setBlock")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				updateBlock(world, loc, Integer.parseInt(args[3]), (args.length > 4? Byte.parseByte(args[4]) : (byte) 0));
+				updateBlock(world, loc, args[3], (args.length > 4? Byte.parseByte(args[4]) : (byte) 0));
 				
 			// world.setBlocks
 			} else if (c.equals("world.setBlocks")) {
 				Location loc1 = parseRelativeBlockLocation(args[0], args[1], args[2]);
 				Location loc2 = parseRelativeBlockLocation(args[3], args[4], args[5]);
-				int blockType = Integer.parseInt(args[6]);
+				String blockType = args[6];
 				byte data = args.length > 7? Byte.parseByte(args[7]) : (byte) 0;
 				setCuboid(loc1, loc2, blockType, data);
 				
@@ -241,8 +243,7 @@ public class RemoteSession {
 				
 			// world.getEntities
 			} else if (c.equals("world.getEntities")) {
-				int entityType = Integer.parseInt(args[0]);
-				send(getEntities(world, entityType));
+				send(getEntities(world, args[0]));
 				
 			// world.removeEntity
 			} else if (c.equals("world.removeEntity")) {
@@ -259,10 +260,10 @@ public class RemoteSession {
 				
 			// world.removeEntities
 			} else if (c.equals("world.removeEntities")) {
-				int entityType = Integer.parseInt(args[0]);
+				String entityType = args[0];
 				int removedEntitiesCount = 0;
 				for (Entity e : world.getEntities()) {
-					if (entityType == -1 || e.getType().getTypeId() == entityType)
+					if (entityType.equals("-1") || e.getType().name().equalsIgnoreCase(entityType))
 					{
 						e.remove();
 						removedEntitiesCount++;
@@ -408,15 +409,15 @@ public class RemoteSession {
 			} else if (c.equals("player.getEntities")) {
 				Player currentPlayer = getCurrentPlayer();
 				int distance = Integer.parseInt(args[0]);
-				int entityTypeId = Integer.parseInt(args[1]);
+				String entityType = args[1];
 
-				send(getEntities(world, currentPlayer.getEntityId(), distance, entityTypeId));
+				send(getEntities(world, currentPlayer.getEntityId(), distance, entityType));
 
 			// player.removeEntities
 			} else if (c.equals("player.removeEntities")) {
 				Player currentPlayer = getCurrentPlayer();
 				int distance = Integer.parseInt(args[0]);
-				int entityType = Integer.parseInt(args[1]);
+				String entityType = args[1];
 
 				send(removeEntities(world, currentPlayer.getEntityId(), distance, entityType));
 
@@ -570,30 +571,23 @@ public class RemoteSession {
 			} else if (c.equals("entity.getEntities")) {
 				int entityId = Integer.parseInt(args[0]);
 				int distance = Integer.parseInt(args[1]);
-				int entityTypeId = Integer.parseInt(args[2]);
+				String entityType = args[2];
 
-				send(getEntities(world, entityId, distance, entityTypeId));
+				send(getEntities(world, entityId, distance, entityType));
 					
 			// entity.removeEntities
 			} else if (c.equals("entity.removeEntities")) {
 				int entityId = Integer.parseInt(args[0]);
 				int distance = Integer.parseInt(args[1]);
-				int entityType = Integer.parseInt(args[2]);
+				String entityType = args[2];
 
 				send(removeEntities(world, entityId, distance, entityType));
 				
 			// world.setSign
 			} else if (c.equals("world.setSign")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
+				updateBlock(world, loc, args[3], (args.length > 4? Byte.parseByte(args[4]) : (byte) 0));
 				Block thisBlock = world.getBlockAt(loc);
-				//blockType should be 68 for wall sign or 63 for standing sign
-				int blockType = Integer.parseInt(args[3]);	
-				//facing direction for wall sign : 2=north, 3=south, 4=west, 5=east
-				//rotation 0 - to 15 for standing sign : 0=south, 4=west, 8=north, 12=east
-				byte blockData = Byte.parseByte(args[4]); 
-				if ((thisBlock.getTypeId() != blockType) || (thisBlock.getData() != blockData)) {
-					thisBlock.setTypeIdAndData(blockType, blockData, true);
-				}
 				//plugin.getLogger().info("Creating sign at " + loc);
 				if ( thisBlock.getState() instanceof Sign ) {
 					Sign sign = (Sign) thisBlock.getState();
@@ -606,15 +600,24 @@ public class RemoteSession {
 			// world.spawnEntity
 			} else if (c.equals("world.spawnEntity")) {
 				Location loc = parseRelativeBlockLocation(args[0], args[1], args[2]);
-				Entity entity = world.spawnEntity(loc, EntityType.fromId(Integer.parseInt(args[3])));
-				send(entity.getEntityId());
+				EntityType entityType = null;
+				try {
+					entityType = EntityType.valueOf(args[3].toUpperCase());
+				} catch (Exception e) {
+				}
+				if (entityType != null) {
+					Entity entity = world.spawnEntity(loc, entityType);
+					send(entity.getEntityId());
+				} else {
+					send("Fail");
+				}
 
 			// world.getEntityTypes
 			} else if (c.equals("world.getEntityTypes")) {
 				StringBuilder bdr = new StringBuilder();				
 				for (EntityType entityType : EntityType.values()) {
-					if ( entityType.isSpawnable() && entityType.getTypeId() >= 0 ) {
-						bdr.append(entityType.getTypeId());
+					if ( entityType.isSpawnable() ) {
+						bdr.append(entityType.name());
 						bdr.append(",");
 						bdr.append(entityType.toString());
 						bdr.append("|");
@@ -637,7 +640,7 @@ public class RemoteSession {
 	}
 
 	// create a cuboid of lots of blocks 
-	private void setCuboid(Location pos1, Location pos2, int blockType, byte data) {
+	private void setCuboid(Location pos1, Location pos2, String blockType, byte data) {
 		int minX, maxX, minY, maxY, minZ, maxZ;
 		World world = pos1.getWorld();
 		minX = pos1.getBlockX() < pos2.getBlockX() ? pos1.getBlockX() : pos2.getBlockX();
@@ -672,7 +675,7 @@ public class RemoteSession {
 		for (int y = minY; y <= maxY; ++y) {
 			 for (int x = minX; x <= maxX; ++x) {
 				 for (int z = minZ; z <= maxZ; ++z) {
-					blockData.append(new Integer(world.getBlockTypeIdAt(x, y, z)).toString() + ",");
+					blockData.append(world.getBlockAt(x, y, z).getType().name() + ",");
 				}
 			}
 		}
@@ -681,21 +684,55 @@ public class RemoteSession {
 	}
 
 	// updates a block
-	private void updateBlock(World world, Location loc, int blockType, byte blockData) {
+	private void updateBlock(World world, Location loc, String blockType, byte blockData) {
 		Block thisBlock = world.getBlockAt(loc);
 		updateBlock(thisBlock, blockType, blockData);
 	}
 	
-	private void updateBlock(World world, int x, int y, int z, int blockType, byte blockData) {
+	private void updateBlock(World world, int x, int y, int z, String blockType, byte blockData) {
 		Block thisBlock = world.getBlockAt(x,y,z);
 		updateBlock(thisBlock, blockType, blockData);
 	}
 	
-	private void updateBlock(Block thisBlock, int blockType, byte blockData) {
-		// check to see if the block is different - otherwise leave it 
-		if ((thisBlock.getTypeId() != blockType) || (thisBlock.getData() != blockData)) {
-			thisBlock.setTypeIdAndData(blockType, blockData, true);
+	private void updateBlock(Block thisBlock, String blockType, byte blockData) {
+		try {
+			// support modern BlockData strings (e.g., "minecraft:oak_stairs[facing=north]")
+			if (blockType.contains("[") || blockType.contains(":")) {
+				try {
+					thisBlock.setBlockData(Bukkit.createBlockData(blockType.toLowerCase()), true);
+					return;
+				} catch (IllegalArgumentException e) {
+					// if it fails, fall back to Material matching
+				}
+			}
+
+			Material material = Material.matchMaterial(blockType);
+			if (material == null && isNumeric(blockType)) {
+				material = Material.matchMaterial(blockType, true);
+			}
+
+			if (material != null && material.isBlock()) {
+				if (thisBlock.getType() != material || thisBlock.getData() != blockData) {
+					thisBlock.setBlockData(Bukkit.getUnsafe().fromLegacy(material, blockData), true);
+				}
+			} else if (material != null && !material.isBlock()) {
+				plugin.getLogger().warning("Material is not a block: " + blockType);
+			} else {
+				// one last try as a modern block name without namespace or brackets
+				try {
+					thisBlock.setBlockData(Bukkit.createBlockData(blockType.toLowerCase()), true);
+				} catch (IllegalArgumentException e) {
+					plugin.getLogger().warning("Invalid block type: " + blockType);
+				}
+			}
+		} catch (Exception e) {
+			plugin.getLogger().warning("Error setting block: " + blockType);
+			e.printStackTrace();
 		}
+	}
+
+	private boolean isNumeric(String str) {
+		return str.matches("-?\\d+");
 	}
 	
 	// gets the current player
@@ -786,10 +823,10 @@ public class RemoteSession {
 		return Math.sqrt(dx*dx + dy*dy + dz*dz);
 	}
 
-	private String getEntities(World world, int entityType) {
+	private String getEntities(World world, String entityType) {
 		StringBuilder bdr = new StringBuilder();				
 		for (Entity e : world.getEntities()) {
-			if (((entityType == -1 && e.getType().getTypeId() >= 0) || e.getType().getTypeId() == entityType) && 
+			if ((entityType.equals("-1") || e.getType().name().equalsIgnoreCase(entityType)) &&
 				e.getType().isSpawnable()) {
 				bdr.append(getEntityMsg(e));
 			}
@@ -797,11 +834,11 @@ public class RemoteSession {
 		return bdr.toString();
 	}
 	
-	private String getEntities(World world, int entityId, int distance, int entityType) {
+	private String getEntities(World world, int entityId, int distance, String entityType) {
 		Entity playerEntity = plugin.getEntity(entityId);
 		StringBuilder bdr = new StringBuilder();
 		for (Entity e : world.getEntities()) {
-			if (((entityType == -1 && e.getType().getTypeId() >= 0) || e.getType().getTypeId() == entityType) && 
+			if ((entityType.equals("-1") || e.getType().name().equalsIgnoreCase(entityType)) &&
 				e.getType().isSpawnable() && 
 				getDistance(playerEntity, e) <= distance) {
 				bdr.append(getEntityMsg(e));
@@ -814,7 +851,7 @@ public class RemoteSession {
 		StringBuilder bdr = new StringBuilder();
 		bdr.append(entity.getEntityId());
 		bdr.append(",");
-		bdr.append(entity.getType().getTypeId());
+		bdr.append(entity.getType().name());
 		bdr.append(",");
 		bdr.append(entity.getType().toString());
 		bdr.append(",");
@@ -827,11 +864,11 @@ public class RemoteSession {
 		return bdr.toString();
 	}
 
-	private int removeEntities(World world, int entityId, int distance, int entityType) {
+	private int removeEntities(World world, int entityId, int distance, String entityType) {
 		int removedEntitiesCount = 0;
 		Entity playerEntityId = plugin.getEntity(entityId);
 		for (Entity e : world.getEntities()) {
-			if ((entityType == -1 || e.getType().getTypeId() == entityType) && getDistance(playerEntityId, e) <= distance)
+			if ((entityType.equals("-1") || e.getType().name().equalsIgnoreCase(entityType)) && getDistance(playerEntityId, e) <= distance)
 			{
 				e.remove();
 				removedEntitiesCount++;
