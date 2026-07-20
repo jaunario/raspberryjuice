@@ -24,6 +24,8 @@ Starting in Minecraft 1.13, numeric block and entity IDs have been replaced by t
  - chat.post
  - events.clear
  - events.block.hits
+ - events.chat.posts
+ - events.projectile.hits
  - player.getTile
  - player.setTile
  - player.getPos
@@ -44,7 +46,8 @@ Starting in Minecraft 1.13, numeric block and entity IDs have been replaced by t
  - getDirection, getRotation, getPitch functions - get the 'direction' players and entities are facing
  - setDirection, setRotation, setPitch functions - set the 'direction' players and entities are facing
  - getPlayerId(playerName) - get the entity of a player by name
- - pollChatPosts() - get events back for posts to the chat
+ - player.getAbsPos, player.setAbsPos - get/set player absolute position (ignores spawn point)
+ - events.chat.posts, events.projectile.hits - get events back for posts to the chat or arrow hits
  - setSign(x,y,z,block type id,data,line1,line2,line3,line4)
    - Wall signs (id=68 or block.SIGN_WALL.id) require data for facing direction 2=north, 3=south, 4=west, 5=east
    - Standing signs (id=63 or block.SIGN_STANDING.id) require data for facing rotation (0-15) 0=south, 4=west, 8=north, 12=east
@@ -56,17 +59,10 @@ Starting in Minecraft 1.13, numeric block and entity IDs have been replaced by t
  - removeEntities - removes all currently loaded entities by optional entity type id
  - entity.getEntities - get currently loaded entities list near specified entity by optional entity type id
  - entity.removeEntities - removes currently loaded entities near specified entity, by optional entity type id
+ - entity.events.block.hits, entity.events.chat.posts, entity.events.projectile.hits, entity.events.clear - events for a specific entity
  - player.getEntities - get currently loaded entities list near specified player entity id by optional entity type id
  - player.removeEntities - removes currently loaded entities near specified player entity id, by optional entity type id
- - events.pollProjectileHits - get events back of arrow hit
- - player.pollProjectileHits - get events back of arrow hit for the player
- - player.pollBlockHits - get block hits for the player
- - player.pollChatPosts - get events back for posts to the chat for the player
- - player.clearEvents - clear events for the player
- - entity.pollProjectileHits - get events back of arrow hit for an entity
- - entity.pollBlockHits - get block hits for an entity
- - entity.pollChatPosts - get events back for posts to the chat for an entity
- - entity.clearEvents - clear events for this entity
+ - player.events.block.hits, player.events.chat.posts, player.events.projectile.hits, player.events.clear - events for the player
  
 Note - extra features are NOT guaranteed to be maintained in future releases, particularly if updates are made to the original Pi API which replace the functionality
 
@@ -87,13 +83,21 @@ You only need the modded libraries to use the extra features, the original libra
 
 ## Build
 
-To build RaspberryJuice, [download and install Maven](https://maven.apache.org/install.html), clone the repository, run `mvn package':
+To build RaspberryJuice, [download and install Maven](https://maven.apache.org/install.html), clone the repository, and run `mvn package`.
+
+**Note:** RaspberryJuice requires Java 8 or later.
 
 ```
 git clone https://github.com/zhuowei/RaspberryJuice
 cd RaspberryJuice
 mvn package
 ```
+
+To run the tests:
+```
+mvn test
+```
+If you are running on Java 16 or later, the tests require specific `--add-opens` flags which are already configured in the `pom.xml`.
 
 ## Version history
 

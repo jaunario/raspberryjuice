@@ -66,7 +66,8 @@ public class Minecraft {
      */
     public Block getBlock(Vec position) {
         send("world.getBlock", position);
-        return Block.decode(receive());
+        String[] parts = receive().split(",");
+        return Block.fromId(Integer.parseInt(parts[0]));
     }
 
     /**
@@ -74,7 +75,8 @@ public class Minecraft {
      */
     public Block getBlockWithData(Vec position) {
         send("world.getBlock", position);
-        return Block.decodeWithData(receive());
+        String[] parts = receive().split(",");
+        return Block.fromId(Integer.parseInt(parts[0])).withData(Integer.parseInt(parts[1]));
     }
 
     /**
