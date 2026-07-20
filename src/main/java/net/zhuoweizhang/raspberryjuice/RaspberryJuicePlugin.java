@@ -1,5 +1,6 @@
 package net.zhuoweizhang.raspberryjuice;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -19,6 +20,8 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -38,6 +41,8 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener {
 
 	public Player hostPlayer = null;
 
+	public VersionManager versionManager;
+
 	private LocationType locationType;
 
 	private HitClickType hitClickType;
@@ -51,6 +56,19 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener {
 	public void onEnable() {
 		//save a copy of the default config.yml if one is not there
         this.saveDefaultConfig();
+
+        //
+        // Load the version manager
+        //
+        InputStream blockStream = getResource("blocks.csv");
+        InputStream itemStream = getResource("items.csv");
+        if (blockStream == null || itemStream == null) {
+            getLogger().warning("Could not find blocks.csv or items.csv, version compatibility checking will not be available.");
+        } else {
+            versionManager = new VersionManager(blockStream, itemStream);
+            ApiManager.setVersionManager(versionManager);
+        }
+
         //get host and port from config.yml
 		String hostname = this.getConfig().getString("hostname");
 		if (hostname == null || hostname.isEmpty()) hostname = "0.0.0.0";
@@ -202,6 +220,25 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener {
 		return ipBans.contains(sessionIp);
 	}
 
+
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (cmd.getName().equalsIgnoreCase("rj-reload")) {
+			//
+			// Load the version manager
+			//
+			InputStream blockStream = getResource("blocks.csv");
+			InputStream itemStream = getResource("items.csv");
+			if (blockStream == null || itemStream == null) {
+				getLogger().warning("Could not find blocks.csv or items.csv, version compatibility checking will not be available.");
+			} else {
+				versionManager = new VersionManager(blockStream, itemStream);
+                ApiManager.setVersionManager(versionManager);
+			}
+			sender.sendMessage("RaspberryJuice configuration and data reloaded.");
+			return true;
+		}
+		return false;
+	}
 
 	public void onDisable() {
 		getServer().getScheduler().cancelTasks(this);

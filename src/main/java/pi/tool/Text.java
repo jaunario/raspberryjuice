@@ -20,7 +20,7 @@ public class Text {
     Vec basePos = Vec.xyz(0, 1, 0);
     Font font = Font.decode("SansSerif-PLAIN-9");
     Vec u = Vec.Unit.X, v = Vec.Unit.Y;
-    Block block = Block.WOOD_PLANKS;
+    Block block = Block.fromName("OAK_PLANKS");
 
     Text(Minecraft minecraft) {
         this.minecraft = minecraft;
