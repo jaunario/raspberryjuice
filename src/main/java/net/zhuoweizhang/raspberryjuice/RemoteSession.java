@@ -54,6 +54,8 @@ public class RemoteSession {
 
 	public RaspberryJuicePlugin plugin;
 
+	private final VersionManager versionManager;
+
 	protected ArrayDeque<PlayerInteractEvent> interactEventQueue = new ArrayDeque<PlayerInteractEvent>();
 	
 	protected ArrayDeque<AsyncPlayerChatEvent> chatPostedQueue = new ArrayDeque<AsyncPlayerChatEvent>();
@@ -70,6 +72,7 @@ public class RemoteSession {
 		this.socket = socket;
 		this.plugin = plugin;
 		this.locationType = plugin.getLocationType();
+		this.versionManager = plugin.versionManager;
 		init();
 	}
 
@@ -636,6 +639,27 @@ public class RemoteSession {
 			e.printStackTrace();
 			send("Fail");
 		
+		}
+	}
+
+	private int getBlockId(String name) {
+		if (versionManager == null) {
+			return Integer.parseInt(name);
+		}
+
+		// Try to parse as an integer
+		try {
+			return Integer.parseInt(name);
+		} catch (NumberFormatException e) {
+			// It's not a number, so check the version manager
+		}
+
+		String currentVersion = plugin.getServer().getVersion();
+		if (versionManager.isBlockAvailable(name, currentVersion)) {
+			return versionManager.getBlockData(name).id;
+		} else {
+			send("Fail: Block " + name + " is not available in this version of Minecraft.");
+			return -1;
 		}
 	}
 
