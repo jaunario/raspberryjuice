@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
@@ -720,17 +721,38 @@ public class RemoteSession {
 	
 	private void updateBlock(Block thisBlock, String blockType, byte blockData) {
 		try {
+			// support modern BlockData strings (e.g., "minecraft:oak_stairs[facing=north]")
+			if (blockType.contains("[") || blockType.contains(":")) {
+				try {
+					thisBlock.setBlockData(Bukkit.createBlockData(blockType.toLowerCase()), true);
+					return;
+				} catch (IllegalArgumentException e) {
+					// if it fails, fall back to Material matching
+				}
+			}
+
 			Material material = Material.matchMaterial(blockType);
 			if (material == null && isNumeric(blockType)) {
 				material = Material.matchMaterial(blockType, true);
 			}
-			if (material != null) {
+
+			if (material != null && material.isBlock()) {
 				if (thisBlock.getType() != material || thisBlock.getData() != blockData) {
 					thisBlock.setBlockData(Bukkit.getUnsafe().fromLegacy(material, blockData), true);
 				}
+			} else if (material != null && !material.isBlock()) {
+				plugin.getLogger().warning("Material is not a block: " + blockType);
+			} else {
+				// one last try as a modern block name without namespace or brackets
+				try {
+					thisBlock.setBlockData(Bukkit.createBlockData(blockType.toLowerCase()), true);
+				} catch (IllegalArgumentException e) {
+					plugin.getLogger().warning("Invalid block type: " + blockType);
+				}
 			}
 		} catch (Exception e) {
-			plugin.getLogger().warning("Invalid block type: " + blockType);
+			plugin.getLogger().warning("Error setting block: " + blockType);
+			e.printStackTrace();
 		}
 	}
 

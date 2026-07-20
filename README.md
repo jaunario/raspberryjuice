@@ -4,15 +4,23 @@
 
 A Bukkit plugin which implements the Minecraft Pi Socket API.
 
+## Modern Minecraft Support (1.13+)
+
+Starting in Minecraft 1.13, numeric block and entity IDs have been replaced by text-based names (e.g., `STONE`, `GRASS_BLOCK`, `ZOMBIE`). This plugin has been fully modernized to support modern Minecraft:
+
+*   **String-Based Materials & Entities:** Commands like `world.setBlock`, `world.getBlocks`, `world.spawnEntity`, and related methods accept and return standard Bukkit Material and EntityType names instead of deprecated integers.
+*   **Block States:** You can now pass modern block state strings directly via the API. For example: `world.setBlock(x, y, z, "oak_stairs[facing=north]")` or `world.setBlock(x, y, z, "beehive[honey_level=5]")`.
+*   **Backward Compatibility:** Legacy scripts using numeric IDs (e.g., `1` for stone) are still supported. The plugin will automatically match numeric IDs to their modern equivalents where possible.
+
 ## Commands
 
 ### Commands supported
 
- - world.get/setBlock
- - world.getBlockWithData
+ - world.get/setBlock (returns and accepts block names or block states as strings)
+ - world.getBlockWithData (returns block name and legacy data byte)
  - world.setBlocks
  - world.getPlayerIds
- - world.getBlocks
+ - world.getBlocks (returns comma-separated block names)
  - chat.post
  - events.clear
  - events.block.hits
