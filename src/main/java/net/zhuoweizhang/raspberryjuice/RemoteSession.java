@@ -763,8 +763,8 @@ public class RemoteSession {
 	// gets the current player
 	public Player getCurrentPlayer() {
 		Player player = attachedPlayer;
-		// if the player hasnt already been retreived for this session, go and get it.
-		if (player == null) {
+		// if the player hasn't already been retrieved or is offline, refresh attached player.
+		if (player == null || !player.isOnline()) {
 			player = plugin.getHostPlayer();
 			attachedPlayer = player;
 		}
@@ -774,11 +774,10 @@ public class RemoteSession {
 	public Player getCurrentPlayer(String name) {
 		// if a named player is returned use that
 		Player player = plugin.getNamedPlayer(name);
-		// otherwise if there is an attached player for this session use that
+		// otherwise if there is an attached online player for this session use that
 		if (player == null) {
 			player = attachedPlayer;
-			// otherwise go and get the host player and make that the attached player
-			if (player == null) {
+			if (player == null || !player.isOnline()) {
 				player = plugin.getHostPlayer();
 				attachedPlayer = player;
 			}
