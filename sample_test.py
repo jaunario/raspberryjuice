@@ -2,16 +2,13 @@
 """
 Sample Python script to test RaspberryJuice modern Minecraft (1.13+) support.
 
-This script demonstrates and verifies:
-1. Connecting to a Spigot server running RaspberryJuice via TCP (default port 4711).
-2. Setting standard modern blocks using Bukkit Material string names (e.g. "DIAMOND_BLOCK", "GOLD_BLOCK").
-3. Setting blocks with modern BlockState syntax (e.g. "oak_stairs[facing=north]", "beehive[honey_level=5]").
-4. Querying placed block types via `world.getBlock` / `world.getBlocks`.
-5. Spawning modern entity types (e.g. "ZOMBIE", "VILLAGER", "PIG") via `world.spawnEntity`.
+This script demonstrates and verifies placing modern Minecraft blocks
+(Copper, Deepslate, Pale Oak, Cherry Planks) directly in front of the player.
 
 Usage:
   1. Make sure your Spigot/Paper server is running with the RaspberryJuice plugin loaded.
-  2. Run this script:
+  2. Log into the Minecraft server so a player is online.
+  3. Run this script:
      python3 sample_test.py [host] [port]
 """
 
@@ -58,66 +55,70 @@ def main():
         print("Please check that your Spigot server is running and RaspberryJuice is loaded.")
         return
 
-    mc.postToChat("RaspberryJuice modern support test starting...")
+    mc.postToChat("RaspberryJuice modern block placement test starting...")
     print("Connected successfully!")
 
-    # Get initial player tile position
+    # Get player tile position and facing direction vector
     try:
         player_pos = mc.player.getTilePos()
+        direction = mc.player.getDirection()
         print(f"Player tile position: {player_pos}")
+        print(f"Player facing direction vector: {direction}")
     except Exception as e:
-        print(f"Note: Could not fetch player position (is a player online?): {e}")
-        player_pos = type('Vec3', (), {'x': 0, 'y': 64, 'z': 0})()
+        print(f"Could not fetch player position or direction: {e}")
+        print("Make sure a player is logged in on the server.")
+        return
 
-    # Test offset origin near player
-    base_x = player_pos.x + 2
-    base_y = player_pos.y
-    base_z = player_pos.z
+    # Determine step direction in front of the player
+    # Uses vector components to step 2 blocks in front
+    dx = 1 if direction.x > 0.3 else (-1 if direction.x < -0.3 else 0)
+    dz = 1 if direction.z > 0.3 else (-1 if direction.z < -0.3 else 0)
 
-    print("\n--- 1. Testing Modern Block Material Names ---")
-    blocks_to_test = [
-        ("DIAMOND_BLOCK", base_x, base_y, base_z),
-        ("GOLD_BLOCK", base_x, base_y + 1, base_z),
-        ("EMERALD_BLOCK", base_x, base_y + 2, base_z),
+    # Default to +X if standing still/looking straight down or up
+    if dx == 0 and dz == 0:
+        dx = 2
+
+    # Place blocks starting 2 blocks directly in front of the player
+    start_x = player_pos.x + (dx * 2)
+    start_y = player_pos.y
+    start_z = player_pos.z + (dz * 2)
+
+    # Calculate line direction vector (perpendicular to facing or stepping forward)
+    step_x = 1 if dx == 0 else 0
+    step_z = 1 if dz == 0 else 0
+    if step_x == 0 and step_z == 0:
+        step_z = 1
+
+    blocks_to_place = [
+        ("COPPER_BLOCK", "Copper Block"),
+        ("DEEPSLATE", "Deepslate"),
+        ("PALE_OAK_PLANKS", "Pale Oak Planks"),
+        ("CHERRY_PLANKS", "Cherry Planks"),
     ]
 
-    for name, x, y, z in blocks_to_test:
-        print(f"Setting block at ({x}, {y}, {z}) -> {name}")
-        mc.setBlock(x, y, z, name)
-        fetched = mc.getBlock(x, y, z)
+    print("\n--- Placing Modern Blocks In Front of Player ---")
+    for i, (material_name, label) in enumerate(blocks_to_place):
+        bx = start_x + (i * step_x)
+        by = start_y
+        bz = start_z + (i * step_z)
+
+        print(f"Placing {label} ({material_name}) at ({bx}, {by}, {bz})...")
+        mc.setBlock(bx, by, bz, material_name)
+
+        # Query block to confirm placement
+        fetched = mc.getBlock(bx, by, bz)
         print(f"  Query result (world.getBlock): {fetched}")
 
-    print("\n--- 2. Testing Modern Block States ---")
-    state_blocks = [
-        ("oak_stairs[facing=north]", base_x + 2, base_y, base_z),
-        ("oak_stairs[facing=east]", base_x + 2, base_y + 1, base_z),
-        ("beehive[honey_level=5]", base_x + 2, base_y + 2, base_z),
-    ]
+    # Also test state-based block (e.g. waxed cut copper stair)
+    bx_stair = start_x + (len(blocks_to_place) * step_x)
+    bz_stair = start_z + (len(blocks_to_place) * step_z)
+    stair_state = "cut_copper_stairs[facing=north]"
+    print(f"\nPlacing Copper Stair State ({stair_state}) at ({bx_stair}, {start_y}, {bz_stair})...")
+    mc.setBlock(bx_stair, start_y, bz_stair, stair_state)
+    fetched_stair = mc.getBlock(bx_stair, start_y, bz_stair)
+    print(f"  Query result (world.getBlock): {fetched_stair}")
 
-    for block_state, x, y, z in state_blocks:
-        print(f"Setting block state at ({x}, {y}, {z}) -> {block_state}")
-        mc.setBlock(x, y, z, block_state)
-        fetched = mc.getBlock(x, y, z)
-        print(f"  Query result (world.getBlock): {fetched}")
-
-    print("\n--- 3. Testing Modern Cuboid Placement & Retrieval (world.getBlocks) ---")
-    mc.setBlocks(base_x + 4, base_y, base_z, base_x + 4, base_y + 2, base_z, "SMOOTH_STONE")
-    blocks = list(mc.getBlocks(base_x + 4, base_y, base_z, base_x + 4, base_y + 2, base_z))
-    print(f"  Query result (world.getBlocks): {blocks}")
-
-    print("\n--- 4. Testing Modern Entity Spawning ---")
-    entities = ["ZOMBIE", "VILLAGER", "PIG"]
-    for i, entity_name in enumerate(entities):
-        ex = base_x + 6
-        ey = base_y
-        ez = base_z + i
-        try:
-            entity_id = mc.spawnEntity(ex, ey, ez, entity_name)
-            print(f"Spawned {entity_name} at ({ex}, {ey}, {ez}) -> Entity ID: {entity_id}")
-        except Exception as e:
-            print(f"Error spawning {entity_name}: {e}")
-
-    mc.postToChat("RaspberryJuice modern support test complete!")
+    mc.postToChat("Placed Copper, Deepslate, Pale Oak, and Cherry Planks in front of you!")
     print("\nTest completed successfully!")
 
 
