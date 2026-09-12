@@ -181,7 +181,7 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener {
 	public Player getNamedPlayer(String name) {
 		if (name == null) return null;
 		for(Player player : Bukkit.getOnlinePlayers()) {
-			if (name.equals(player.getPlayerListName())) {
+			if (name.equalsIgnoreCase(player.getName()) || name.equalsIgnoreCase(player.getPlayerListName())) {
 				return player;
 			}
 		}
@@ -189,7 +189,7 @@ public class RaspberryJuicePlugin extends JavaPlugin implements Listener {
 	}
 
 	public Player getHostPlayer() {
-		if (hostPlayer != null) return hostPlayer;
+		if (hostPlayer != null && hostPlayer.isOnline()) return hostPlayer;
 		for(Player player : Bukkit.getOnlinePlayers()) {
 			return player;
 		}
