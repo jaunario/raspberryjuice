@@ -32,8 +32,14 @@ from .util import flatten
 - removeEntityType()
 """
 
+def _int_floor_item(x):
+    try:
+        return int(math.floor(float(x)))
+    except (ValueError, TypeError):
+        return x
+
 def intFloor(*args):
-    return [int(math.floor(x)) for x in flatten(args)]
+    return [_int_floor_item(x) for x in flatten(args)]
 
 class CmdPositioner:
     """Methods for setting and getting positions"""
@@ -283,18 +289,32 @@ class Minecraft:
         self.events = CmdEvents(connection)
 
     def getBlock(self, *args):
-        """Get block (x,y,z) => id:int"""
-        return int(self.conn.sendReceive(b"world.getBlock", intFloor(args)))
+        """Get block (x,y,z) => id:int or name:str"""
+        res = self.conn.sendReceive(b"world.getBlock", intFloor(args))
+        try:
+            return int(res)
+        except ValueError:
+            return res
 
     def getBlockWithData(self, *args):
         """Get block with data (x,y,z) => Block"""
         ans = self.conn.sendReceive(b"world.getBlockWithData", intFloor(args))
-        return Block(*list(map(int, ans.split(","))))
+        parts = ans.split(",")
+        try:
+            return Block(int(parts[0]), int(parts[1]))
+        except ValueError:
+            return Block(parts[0], int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0)
 
     def getBlocks(self, *args):
-        """Get a cuboid of blocks (x0,y0,z0,x1,y1,z1) => [id:int]"""
+        """Get a cuboid of blocks (x0,y0,z0,x1,y1,z1) => [id:int or name:str]"""
         s = self.conn.sendReceive(b"world.getBlocks", intFloor(args))
-        return map(int, s.split(","))
+        res = []
+        for item in s.split(","):
+            try:
+                res.append(int(item))
+            except ValueError:
+                res.append(item)
+        return res
 
     def setBlock(self, *args):
         """Set block (x,y,z,id,[data])"""
