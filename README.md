@@ -88,8 +88,8 @@ To build RaspberryJuice, [download and install Maven](https://maven.apache.org/i
 **Note:** RaspberryJuice requires Java 8 or later.
 
 ```
-git clone https://github.com/zhuowei/RaspberryJuice
-cd RaspberryJuice
+git clone https://github.com/jaunario/raspberryjuice
+cd raspberryjuice
 mvn package
 ```
 
