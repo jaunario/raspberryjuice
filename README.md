@@ -101,6 +101,7 @@ If you are running on Java 16 or later, the tests require specific `--add-opens`
 
 ## Version history
 
+ - 1.13 - modern Minecraft 1.13+ support, string-based material/entity names, block state string support, backward compatibility
  - 1.12.1 - hostname specified in config.yml
  - 1.12 - getEntities, removeEntities, pollProjectileHits, events calls by player and entity
  - 1.11 - spawnEntity, setDirection, setRotation, setPitch
